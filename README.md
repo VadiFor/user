@@ -1,2 +1,2 @@
-# booking
-Micro-service "booking" for resource reservation system (meetings / rooms / equipment).
+# user
+Microservice "user" for resource reservation system (meetings / rooms / equipment).
