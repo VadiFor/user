@@ -1,7 +1,12 @@
 package com.learn.java.controller;
 
+import com.learn.java.dto.UserCreateRequestDto;
+import com.learn.java.dto.UserUpdateRequestDto;
+import com.learn.java.exception.IncorrectDataException;
 import com.learn.java.model.User;
+import com.learn.java.model.enums.PositionUser;
 import com.learn.java.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,23 +29,42 @@ public class UserController {
 	}
 	
 	@PostMapping
-	public User createUser(@RequestParam(value = "name") String name,
-						   @RequestParam(value = "email") String email,
-						   @RequestParam(value = "phone", required = false) String phone) {
-		if (phone != null && phone.charAt(0) == ' ') phone = "+" + phone.trim();
-		return userService.create(name, email, phone);
+	public User createUser(@RequestBody @Valid UserCreateRequestDto userCreateRequestDto,
+						   @RequestHeader(value = "Authorization") String idAuthor) {
+		System.out.println(userCreateRequestDto);
+		if (userService.getAllUsers().isEmpty()) {
+			if ((userCreateRequestDto.getPosition() == null) || (userCreateRequestDto.getPosition() != PositionUser.ADMIN))
+				throw new IncorrectDataException("The first user must be in the Admin position");
+		}
+		else {
+			checkIsAdmin(idAuthor);
+		}
+		userService.checkRequestData(userCreateRequestDto.getFirstName(), userCreateRequestDto.getLastName(), userCreateRequestDto.getMiddleName(), userCreateRequestDto.getDateOfBirth());
+		userCreateRequestDto.setPhone(userService.normalizePhone(userCreateRequestDto.getPhone()));
+		return userService.create(userCreateRequestDto);
 	}
 	
 	@PatchMapping("/{id}")
 	public User updateUser(@PathVariable String id,
-						   @RequestParam(value = "name", required = false) String name,
-						   @RequestParam(value = "email", required = false) String email,
-						   @RequestParam(value = "phone", required = false) String phone) {
-		return userService.update(id, name, email, phone);
+						   @RequestBody @Valid UserUpdateRequestDto userUpdateRequestDto,
+						   @RequestHeader(value = "Authorization") String idAuthor) {
+		checkIsAdmin(idAuthor);
+		userService.checkRequestData(userUpdateRequestDto.getFirstName(), userUpdateRequestDto.getLastName(), userUpdateRequestDto.getMiddleName(), userUpdateRequestDto.getDateOfBirth());
+		userUpdateRequestDto.setPhone(userService.normalizePhone(userUpdateRequestDto.getPhone()));
+		return userService.update(id, userUpdateRequestDto);
 	}
 	
 	@DeleteMapping("/{id}")
-	public String deleteUser(@PathVariable String id) {
+	public String deleteUser(@PathVariable String id,
+							 @RequestHeader(value = "Authorization") String idAuthor) {
+		if (userService.getUser(idAuthor).getPosition() != PositionUser.ADMIN) throw new IncorrectDataException("Only the Administrator can create users. Authorization with id = «" + idAuthor + "» is not an Administrator");
 		return userService.delete(id);
+	}
+	
+	private void checkIsAdmin(String idAuthor) {
+		User author = userService.getUser(idAuthor);
+		if (author.getPosition() != PositionUser.ADMIN) {
+			throw new IncorrectDataException("Only the Administrator can perform this action. Authorization with id = «" + idAuthor + "» is not an Administrator");
+		}
 	}
 }
