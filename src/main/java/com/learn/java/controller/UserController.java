@@ -19,13 +19,16 @@ public class UserController {
 	private final UserService userService;
 	
 	@GetMapping
-	public List<User> getAllUsers() {
+	public List<User> getAllUsers(@RequestHeader(value = "Authorization") String idAuthor) {
+		checkIsAdmin(idAuthor);
 		return userService.getAllUsers();
 	}
 	
 	@GetMapping("/{id}")
-	public User getUser(@PathVariable String id) {
-		return userService.getUser(id);
+	public User getUser(@PathVariable String id,
+						@RequestHeader(value = "Authorization") String idAuthor) {
+		if (!idAuthor.equals(id)) checkIsAdmin(idAuthor);
+		return userService.getById(id);
 	}
 	
 	@PostMapping
@@ -48,7 +51,7 @@ public class UserController {
 	public User updateUser(@PathVariable String id,
 						   @RequestBody @Valid UserUpdateRequestDto userUpdateRequestDto,
 						   @RequestHeader(value = "Authorization") String idAuthor) {
-		checkIsAdmin(idAuthor);
+		if (!idAuthor.equals(id)) checkIsAdmin(idAuthor);
 		userService.checkRequestData(userUpdateRequestDto.getFirstName(), userUpdateRequestDto.getLastName(), userUpdateRequestDto.getMiddleName(), userUpdateRequestDto.getDateOfBirth());
 		userUpdateRequestDto.setPhone(userService.normalizePhone(userUpdateRequestDto.getPhone()));
 		return userService.update(id, userUpdateRequestDto);
@@ -57,12 +60,12 @@ public class UserController {
 	@DeleteMapping("/{id}")
 	public String deleteUser(@PathVariable String id,
 							 @RequestHeader(value = "Authorization") String idAuthor) {
-		if (userService.getUser(idAuthor).getPosition() != PositionUser.ADMIN) throw new IncorrectDataException("Only the Administrator can create users. Authorization with id = «" + idAuthor + "» is not an Administrator");
+		checkIsAdmin(idAuthor);
 		return userService.delete(id);
 	}
 	
 	private void checkIsAdmin(String idAuthor) {
-		User author = userService.getUser(idAuthor);
+		User author = userService.getById(idAuthor);
 		if (author.getPosition() != PositionUser.ADMIN) {
 			throw new IncorrectDataException("Only the Administrator can perform this action. Authorization with id = «" + idAuthor + "» is not an Administrator");
 		}

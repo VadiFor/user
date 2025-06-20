@@ -11,7 +11,7 @@ public interface UserService {
 	User create(UserCreateRequestDto userCreateRequestDto);
 	User update(String id, UserUpdateRequestDto userUpdateRequestDto);
 	String delete(String id);
-	User getUser(String id);
+	User getById(String id);
 	List<User> getAllUsers();
 	void checkRequestData(String firstName, String lastName, String middleName, LocalDate dateOfBirth);
 	String normalizePhone(String phone);

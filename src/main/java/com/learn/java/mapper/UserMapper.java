@@ -1,6 +1,7 @@
 package com.learn.java.mapper;
 
 import com.learn.java.dto.UserCreateRequestDto;
+import com.learn.java.dto.UserInternalResponseDto;
 import com.learn.java.dto.UserUpdateRequestDto;
 import com.learn.java.model.User;
 import org.mapstruct.*;
@@ -17,6 +18,13 @@ public interface UserMapper {
 		if (userUpdateRequestDto.getDateOfBirth() != null) {
 			user.setAge(LocalDate.now().getYear() - userUpdateRequestDto.getDateOfBirth().getYear());
 		}
+	}
+	
+	@Mapping(target = "fullName", expression = "java(makeFullName(user.getFirstName(),user.getLastName(),user.getMiddleName()))")
+	UserInternalResponseDto toInternalDto(User user);
+	
+	default String makeFullName(String firstName, String lastName, String middleName) {
+		return lastName + " " + firstName + (middleName != null ? " " + middleName : "");
 	}
 	
 	@Mapping(target = "age", expression = "java(calculateAge(userCreateRequestDto.getDateOfBirth()))")
