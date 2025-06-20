@@ -8,6 +8,7 @@ import com.learn.java.model.User;
 import com.learn.java.repository.UserRepository;
 import com.learn.java.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class UserServiceImpl implements UserService {
 	private final UserMapper userMapper;
 	
 	@Override
+	@Transactional
 	public User create(UserCreateRequestDto userCreateRequestDto) {
 		checkExistsEmailOrPhone(userCreateRequestDto.getEmail(), userCreateRequestDto.getPhone());
 		User newUser = userMapper.toUser(userCreateRequestDto);
@@ -30,8 +32,9 @@ public class UserServiceImpl implements UserService {
 	}
 	
 	@Override
+	@Transactional
 	public User update(String id, UserUpdateRequestDto userUpdateRequestDto) {
-		User foundUser = getUser(id);
+		User foundUser = getById(id);
 		checkExistsEmailOrPhone(userUpdateRequestDto.getEmail(), userUpdateRequestDto.getPhone());
 		userMapper.updateUserFromDto(userUpdateRequestDto, foundUser);
 		User updatedUser = userRepository.save(foundUser);
@@ -39,14 +42,15 @@ public class UserServiceImpl implements UserService {
 	}
 	
 	@Override
+	@Transactional
 	public String delete(String id) {
-		User foundUser = getUser(id);
+		User foundUser = getById(id);
 		userRepository.delete(foundUser);
 		return "User has been successfully deleted";
 	}
 	
 	@Override
-	public User getUser(String id) {
+	public User getById(String id) {
 		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User with id «" + id + "» not found"));
 	}
 	
