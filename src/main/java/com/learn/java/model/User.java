@@ -45,7 +45,7 @@ public class User {
 	
 	@Column(nullable = false)
 	@NotNull(message = "DateOfBirth user required")
-	@JsonFormat(pattern = "yyyy-MM-dd")
+	@JsonFormat(pattern = "dd.MM.yyyy")
 	private LocalDate dateOfBirth;
 	
 	@Column(nullable = false)
